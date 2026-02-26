@@ -268,7 +268,7 @@
                         logs = data.logs || [];
                         currentAdmin = data.currentAdmin || "Admin Utama";
                     } else {
-                        setDoc(docRef, { users, logs, currentAdmin });
+                        setDoc(docRef, { users, logs, currentAdmin }).catch(console.error);
                     }
                     renderApp();
                 }, (error) => {
@@ -277,24 +277,28 @@
             }
         });
 
-        const updateData = async (newUsers, newLogs, newAdmin) => {
+        // Optimasi: Fungsi update data dan render secara berurutan
+        const updateData = (newUsers, newLogs, newAdmin) => {
             users = newUsers;
             logs = newLogs;
             if (newAdmin) currentAdmin = newAdmin;
             
+            // Langsung Render layarnya agar responsif (instan)
+            renderApp();
+            
+            // Lakukan sinkronisasi data ke Cloud secara asinkron di latar belakang
             if (firebaseUser) {
                 const docRef = doc(db, 'artifacts', appId, 'users', firebaseUser.uid, 'dashboard', 'data');
-                await setDoc(docRef, { users, logs, currentAdmin });
+                setDoc(docRef, { users, logs, currentAdmin }).catch(console.error);
             }
-            renderApp();
         };
 
-        // Render UI
+        // Render UI Utama
         function renderApp() {
             renderHeader();
             renderUsers();
             renderLogs();
-            lucide.createIcons();
+            lucide.createIcons(); // Memuat ikon baru setiap kali HTML di-refresh
         }
 
         function renderHeader() {
@@ -339,7 +343,7 @@
                 row.dataset.index = index;
                 row.title = isHighPoints ? "Pencapaian Poin Tinggi!" : "Klik dan tahan untuk menggeser posisi";
 
-                // Drag Events
+                // Event Listener Drag & Drop
                 row.addEventListener('dragstart', (e) => { dragItemIndex = index; });
                 row.addEventListener('dragenter', (e) => { dragOverItemIndex = index; });
                 row.addEventListener('dragover', (e) => { e.preventDefault(); });
@@ -402,7 +406,7 @@
                 `;
                 container.appendChild(row);
 
-                // Auto-focus logic for inline edits
+                // Auto-fokus untuk edit cepat
                 if (inlinePointEditId === user.id) {
                     setTimeout(() => document.getElementById(`inline-point-input-${user.id}`).focus(), 0);
                 }
@@ -459,7 +463,7 @@
             renderApp();
         });
 
-        // --- ADMIN NAME EDIT ---
+        // --- EDIT NAMA ADMIN ---
         const textAdmin = document.getElementById('current-admin-text');
         const editAdminContainer = document.getElementById('admin-edit-container');
         const textAdminContainer = document.getElementById('admin-display-container');
@@ -478,7 +482,9 @@
             editAdminContainer.classList.add('hidden');
             editAdminContainer.classList.remove('flex');
             textAdminContainer.classList.remove('hidden');
-            updateData(users, logs, newAdmin);
+            if (newAdmin !== currentAdmin) {
+                updateData(users, logs, newAdmin);
+            }
         };
 
         document.getElementById('save-admin-btn').addEventListener('click', saveAdmin);
@@ -489,7 +495,7 @@
         });
         adminInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveAdmin(); });
 
-        // --- INLINE EDIT POINTS ---
+        // --- EDIT POIN CEPAT (INLINE) ---
         window.openInlinePoints = (id, value) => {
             inlinePointEditId = id;
             inlinePointEditValue = value;
@@ -505,6 +511,9 @@
             if (isNaN(parsed) || parsed < 0) return alert("Poin tidak valid!");
             
             const user = users.find(u => u.id === id);
+            
+            inlinePointEditId = null; // Tutup mode input
+            
             if (parsed !== user.points) {
                 const newLog = { id: Date.now(), timestamp: new Date().toLocaleString('id-ID'), admin: currentAdmin, targetUser: user.name, action: 'Edit Poin', oldPoints: user.points, newPoints: parsed };
                 
@@ -513,12 +522,14 @@
                 
                 const updatedUser = { ...user, points: parsed, editedDate: new Date().toDateString(), editCountToday: newEditCount };
                 const otherUsers = users.filter(u => u.id !== id);
-                updateData([...otherUsers, updatedUser], [newLog, ...logs]);
+                
+                updateData([...otherUsers, updatedUser], [newLog, ...logs]); // Render dipanggil di sini
+            } else {
+                renderApp(); // Render jika batal/tidak berubah
             }
-            inlinePointEditId = null;
-            renderApp();
         };
-        // Global listener for Enter key on inline inputs
+        
+        // Listener Enter untuk Edit Poin & Bonus Cepat
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 if (inlinePointEditId && e.target.id === `inline-point-input-${inlinePointEditId}`) saveInlinePoints(inlinePointEditId);
@@ -526,7 +537,7 @@
             }
         });
 
-        // --- INLINE EDIT BONUS ---
+        // --- EDIT BONUS CEPAT (INLINE) ---
         window.openInlineBonus = (id, value) => {
             inlineBonusEditId = id;
             inlineBonusEditValue = value;
@@ -543,6 +554,9 @@
             
             const user = users.find(u => u.id === id);
             const currentBonus = user.bonus || 0;
+            
+            inlineBonusEditId = null; // Tutup mode input
+
             if (parsed !== currentBonus) {
                 const newLog = { id: Date.now(), timestamp: new Date().toLocaleString('id-ID'), admin: currentAdmin, targetUser: user.name, action: 'Edit Bonus', oldPoints: currentBonus, newPoints: parsed };
                 
@@ -551,13 +565,14 @@
                 
                 const updatedUser = { ...user, bonus: parsed, editedDate: new Date().toDateString(), editCountToday: newEditCount };
                 const otherUsers = users.filter(u => u.id !== id);
-                updateData([...otherUsers, updatedUser], [newLog, ...logs]);
+                
+                updateData([...otherUsers, updatedUser], [newLog, ...logs]); // Render dipanggil di sini
+            } else {
+                renderApp(); // Render jika batal/tidak berubah
             }
-            inlineBonusEditId = null;
-            renderApp();
         };
 
-        // --- DRAG AND DROP SORTING ---
+        // --- FUNGSI DRAG AND DROP (URUTKAN) ---
         function handleSort() {
             if (dragItemIndex !== null && dragOverItemIndex !== null && dragItemIndex !== dragOverItemIndex) {
                 let _users = [...users];
@@ -571,9 +586,10 @@
             dragOverItemIndex = null;
         }
 
-        // --- ADD USER MODAL ---
+        // --- MODAL TAMBAH PENGGUNA ---
         const addModal = document.getElementById('add-modal');
         document.getElementById('add-user-btn').addEventListener('click', () => {
+            // Bersihkan form setiap kali dibuka
             document.getElementById('add-name').value = '';
             document.getElementById('add-email').value = '';
             document.getElementById('add-points').value = '0';
@@ -591,6 +607,7 @@
             const role = document.getElementById('add-role').value.trim() || 'Pengguna';
 
             if (!name || !email) return alert("Nama dan Email wajib diisi!");
+            if (points < 0 || bonus < 0) return alert("Poin dan Bonus tidak boleh bernilai negatif!");
             
             const newUser = { id: Date.now(), name, email, points, bonus, role };
             const newLog = { id: Date.now()+1, timestamp: new Date().toLocaleString('id-ID'), admin: currentAdmin, targetUser: name, action: 'Tambah Akun Baru', oldPoints: 0, newPoints: points };
@@ -599,7 +616,7 @@
             addModal.classList.add('hidden');
         });
 
-        // --- EDIT USER MODAL ---
+        // --- MODAL PENGATURAN (EDIT) PENGGUNA ---
         const editModal = document.getElementById('edit-modal');
         window.openEditModal = (id) => {
             const user = users.find(u => u.id === id);
@@ -643,7 +660,7 @@
             editModal.classList.add('hidden');
         });
 
-        // --- DELETE USER ---
+        // --- HAPUS PENGGUNA ---
         const deleteModal = document.getElementById('delete-modal');
         document.getElementById('delete-user-trigger').addEventListener('click', () => {
             userToDeleteId = parseInt(document.getElementById('edit-id').value, 10);
@@ -662,7 +679,7 @@
             deleteModal.classList.add('hidden');
         });
 
-        // --- BACKUP & RESTORE ---
+        // --- BACKUP & RESTORE DATA KE/DARI KOMPUTER ---
         document.getElementById('backup-btn').addEventListener('click', () => {
             const dataToSave = { users, logs, currentAdmin };
             const blob = new Blob([JSON.stringify(dataToSave, null, 2)], { type: 'application/json' });
@@ -694,10 +711,10 @@
                 }
             };
             reader.readAsText(file);
-            e.target.value = '';
+            e.target.value = ''; // Reset input
         });
 
-        // Initial Render (before Firebase loads, just in case)
+        // Tampilkan awal sebelum Firebase selesai loading
         renderApp();
     </script>
 </body>
