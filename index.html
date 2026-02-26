@@ -39,16 +39,16 @@
                 <div class="flex items-center gap-2 text-sm md:text-base text-slate-500">
                     <span>Admin Email:</span>
                     <div id="email-display-container" class="flex items-center gap-2">
-                        <span id="current-email-text" class="font-medium text-slate-700 cursor-pointer border-b border-dashed border-slate-400 hover:text-blue-600 hover:border-blue-600 transition-colors" title="Klik untuk memasukkan email">Belum disetel</span>
+                        <span id="current-email-text" class="font-medium text-slate-700 cursor-pointer border-b border-dashed border-slate-400 hover:text-blue-600 hover:border-blue-600 transition-colors px-1 py-0.5 rounded" title="Klik untuk memasukkan email">Belum disetel</span>
                         <span id="sync-status" class="hidden text-[10px] md:text-xs px-2 py-0.5 rounded-md items-center gap-1 font-medium bg-emerald-100 text-emerald-700 ml-1" title="Sinkronisasi Cloud Aktif"></span>
                         <button id="logout-btn" class="hidden items-center justify-center p-1 text-red-500 hover:bg-red-100 rounded-md transition-colors" title="Keluar Akun">
                             <i data-lucide="log-out" class="w-4 h-4 md:w-5 md:h-5"></i>
                         </button>
                     </div>
                     <div id="email-edit-container" class="hidden items-center gap-1">
-                        <input type="email" id="email-input" class="px-2 py-0.5 border border-blue-300 rounded text-slate-800 outline-none w-48 md:w-64 bg-white text-sm" placeholder="Masukkan email anda...">
-                        <button id="save-email-btn" class="p-1 text-emerald-600 hover:bg-emerald-50 rounded" title="Simpan & Muat Data"><i data-lucide="check" class="w-4 h-4"></i></button>
-                        <button id="cancel-email-btn" class="p-1 text-slate-400 hover:bg-slate-100 rounded hidden" title="Batal"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        <input type="email" id="email-input" class="px-2 py-1 border border-blue-300 rounded text-slate-800 outline-none w-48 md:w-64 bg-white text-sm" placeholder="Masukkan email anda...">
+                        <button id="save-email-btn" class="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded" title="Simpan & Muat Data"><i data-lucide="check" class="w-4 h-4"></i></button>
+                        <button id="cancel-email-btn" class="p-1.5 text-slate-400 hover:bg-slate-100 rounded hidden" title="Batal"><i data-lucide="x" class="w-4 h-4"></i></button>
                     </div>
                 </div>
             </div>
@@ -68,11 +68,14 @@
 
         <!-- PESAN SELAMAT DATANG (Tampil jika email belum dimasukkan) -->
         <div id="welcome-message" class="text-center py-24 md:py-32">
-            <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6 cursor-pointer hover:bg-blue-200 transition-colors" onclick="document.getElementById('current-email-text').click()">
                 <i data-lucide="mail" class="w-10 h-10 text-blue-500"></i>
             </div>
             <h2 class="text-2xl md:text-3xl font-bold text-slate-800 mb-2">Mulai Dasbor Anda</h2>
-            <p class="text-slate-500 max-w-md mx-auto">Silakan klik tulisan <strong class="text-slate-700">"Belum disetel"</strong> di bagian atas dan masukkan email Anda untuk memuat atau membuat ruang kerja baru.</p>
+            <p class="text-slate-500 max-w-md mx-auto mb-4">Silakan klik tombol di bawah ini atau tulisan <strong class="text-slate-700">"Belum disetel"</strong> di bagian atas untuk memasukkan email Anda.</p>
+            <button onclick="document.getElementById('current-email-text').click()" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-sm inline-flex items-center gap-2">
+                Masukkan Email <i data-lucide="arrow-right" class="w-4 h-4"></i>
+            </button>
         </div>
 
         <!-- KONTEN DASBOR (Tampil setelah email dimasukkan) -->
@@ -228,16 +231,26 @@
         </div>
     </div>
 
-    <!-- Firebase dan Logika Aplikasi -->
+    <!-- Tautkan JavaScript Inti -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Cek Keberadaan Konfigurasi Cloud Bawaan
+        // ==========================================
+        // 1. SISTEM KEAMANAN & PENCEGAH ERROR
+        // ==========================================
+        // Fitur ini memastikan web tetap jalan jika di hosting lokal memblokir akses penyimpanan.
+        function safeGet(key) { try { return localStorage.getItem(key); } catch(e) { return null; } }
+        function safeSet(key, value) { try { localStorage.setItem(key, value); } catch(e) { console.warn("Penyimpanan lokal tidak tersedia."); } }
+        function safeRemove(key) { try { localStorage.removeItem(key); } catch(e) {} }
+        function renderIcons() { if (typeof lucide !== 'undefined') { lucide.createIcons(); } }
+
+        // ==========================================
+        // 2. DATA DASAR DAN VARIABEL APLIKASI
+        // ==========================================
         const isFirebaseConfigProvided = typeof __firebase_config !== 'undefined' && __firebase_config.trim() !== '';
         
-        // Data Dasar Saat Membuat Dasbor Baru
         const initialUsers = [
             { id: 1, name: 'Budi Santoso', email: 'budi@example.com', points: 1500, bonus: 500, role: 'Pengguna' },
             { id: 4, name: 'Admin Utama', email: 'admin@rewards.local', points: 99999, bonus: 0, role: 'Admin' }
@@ -246,7 +259,6 @@
             { id: 101, timestamp: new Date().toLocaleString('id-ID'), admin: 'Sistem', targetUser: 'Sistem', action: 'Inisialisasi data awal', oldPoints: 0, newPoints: 0 }
         ];
 
-        // State Aplikasi
         let users = [];
         let logs = [];
         let isManageMode = false;
@@ -255,82 +267,35 @@
         let db = null;
         let firebaseUser = null;
         let appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        let userToDeleteId = null;
-
-        // Akun Penyimpanan Saat Ini
+        
         let currentEmail = null;
         let currentDashboardId = null;
         let unsubscribeSnapshot = null;
 
-        // State Inline Edit
-        let inlinePointEditId = null;
-        let inlinePointEditValue = "";
-        let inlineBonusEditId = null;
-        let inlineBonusEditValue = "";
+        let inlinePointEditId = null, inlinePointEditValue = "";
+        let inlineBonusEditId = null, inlineBonusEditValue = "";
+        let userToDeleteId = null;
+        let dragItemIndex = null, dragOverItemIndex = null;
 
-        // Referensi Drag & Drop
-        let dragItemIndex = null;
-        let dragOverItemIndex = null;
+        // Render ikon awal
+        renderIcons();
 
-        lucide.createIcons();
-
-        // --- INISIALISASI FIREBASE & AUTO LOGIN ---
-        function checkAutoLogin() {
-            const savedEmail = localStorage.getItem('rewardsAdminEmail');
-            if (savedEmail) {
-                document.getElementById('email-input').value = savedEmail;
-                loadDashboard();
-            }
-        }
-
-        if (isFirebaseConfigProvided) {
-            try {
-                const firebaseConfig = JSON.parse(__firebase_config);
-                const app = initializeApp(firebaseConfig);
-                const auth = getAuth(app);
-                db = getFirestore(app);
-
-                let authResolved = false;
-
-                onAuthStateChanged(auth, (user) => {
-                    firebaseUser = user;
-                    // Hanya jalankan auto-login setelah koneksi verifikasi selesai
-                    if (!authResolved) {
-                        authResolved = true;
-                        checkAutoLogin();
-                    }
-                });
-
-                const initAuth = async () => {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-                };
-                initAuth();
-
-            } catch (error) {
-                console.error("Konfigurasi Firebase tidak valid. Berjalan di Mode Lokal.");
-                checkAutoLogin();
-            }
-        } else {
-            // Mode Lokal langsung cek login
-            checkAutoLogin();
-        }
-
-        // Fungsi Membersihkan Email menjadi ID Dokumen unik
+        // ==========================================
+        // 3. LOGIKA ANTARMUKA & TOMBOL UTAMA
+        // ==========================================
+        
+        // Membersihkan email jadi ID aman
         function sanitizeEmail(email) {
             return email.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
         }
 
-        // --- UI EMAIL / ADMIN AKTIF ---
         const textEmail = document.getElementById('current-email-text');
         const editEmailContainer = document.getElementById('email-edit-container');
         const textEmailContainer = document.getElementById('email-display-container');
         const emailInput = document.getElementById('email-input');
         const cancelEmailBtn = document.getElementById('cancel-email-btn');
 
+        // Buka kotak input email
         textEmail.addEventListener('click', () => {
             emailInput.value = currentEmail || '';
             textEmailContainer.classList.add('hidden');
@@ -349,6 +314,7 @@
             textEmailContainer.classList.remove('hidden');
         });
 
+        // Proses Memuat Dasbor berdasarkan Email
         const loadDashboard = async () => {
             const email = emailInput.value.trim();
             if (!email) {
@@ -360,10 +326,9 @@
             currentEmail = email;
             currentDashboardId = dashId;
 
-            // Simpan email ke memori browser agar tidak hilang saat di-refresh
-            localStorage.setItem('rewardsAdminEmail', email);
+            safeSet('rewardsAdminEmail', email); // Simpan aman
 
-            // Reset UI Header
+            // Tampilan Header
             textEmail.textContent = email;
             textEmail.classList.remove('text-slate-700');
             textEmail.classList.add('text-blue-600', 'font-bold');
@@ -371,7 +336,6 @@
             editEmailContainer.classList.remove('flex');
             textEmailContainer.classList.remove('hidden');
 
-            // Setel Indikator Cloud / Lokal
             const syncStatus = document.getElementById('sync-status');
             syncStatus.classList.remove('hidden');
             if (isFirebaseConfigProvided) {
@@ -382,27 +346,19 @@
                 syncStatus.innerHTML = '<i data-lucide="hard-drive" class="w-3 h-3"></i> Lokal';
             }
 
-            // Tampilkan UI Dasbor
             document.getElementById('welcome-message').classList.add('hidden');
             document.getElementById('dashboard-content').classList.remove('hidden');
             document.getElementById('dashboard-content').classList.add('flex');
             document.getElementById('header-tools').classList.remove('hidden');
             document.getElementById('header-tools').classList.add('flex');
-
-            // Tampilkan tombol logout
             document.getElementById('logout-btn').classList.remove('hidden');
             document.getElementById('logout-btn').classList.add('flex');
 
-            // Hentikan pemantauan data sebelumnya jika ada
-            if (unsubscribeSnapshot) {
-                unsubscribeSnapshot();
-                unsubscribeSnapshot = null;
-            }
+            if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
 
-            // Muat dari Cloud
+            // Logika Muat Data
             if (isFirebaseConfigProvided && firebaseUser && db) {
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'dashboards', dashId);
-                
                 unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
                     if (docSnap.exists()) {
                         const data = docSnap.data();
@@ -411,15 +367,12 @@
                         currentAdmin = data.currentAdmin || "Admin Utama";
                         renderApp();
                     } else {
-                        // Jika email belum ada datanya, buat baru
                         setDoc(docRef, { users: initialUsers, logs: initialLogs, currentAdmin: "Admin Utama" }).catch(console.error);
                     }
-                }, (error) => {
-                    console.error("Gagal sinkronisasi data:", error);
-                });
+                }, (error) => console.error("Gagal sinkronisasi data:", error));
             } else {
-                // Mode Lokal: Muat dari localStorage jika ada, jika tidak pakai data awal
-                const savedData = localStorage.getItem(`rewardsData_${dashId}`);
+                // MUAT DATA LOKAL
+                const savedData = safeGet(`rewardsData_${dashId}`);
                 if (savedData) {
                     try {
                         const parsed = JSON.parse(savedData);
@@ -427,14 +380,10 @@
                         logs = parsed.logs || [...initialLogs];
                         currentAdmin = parsed.currentAdmin || "Admin Utama";
                     } catch(e) {
-                        users = [...initialUsers];
-                        logs = [...initialLogs];
-                        currentAdmin = "Admin Utama";
+                        users = [...initialUsers]; logs = [...initialLogs]; currentAdmin = "Admin Utama";
                     }
                 } else {
-                    users = [...initialUsers];
-                    logs = [...initialLogs];
-                    currentAdmin = "Admin Utama";
+                    users = [...initialUsers]; logs = [...initialLogs]; currentAdmin = "Admin Utama";
                 }
                 renderApp();
             }
@@ -443,30 +392,19 @@
         document.getElementById('save-email-btn').addEventListener('click', loadDashboard);
         emailInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') loadDashboard(); });
 
-        // Logout
+        // Tombol Logout
         document.getElementById('logout-btn').addEventListener('click', () => {
-            if (unsubscribeSnapshot) {
-                unsubscribeSnapshot();
-                unsubscribeSnapshot = null;
-            }
-            currentEmail = null;
-            currentDashboardId = null;
-            
-            // Hapus ingatan email dari browser saat logout
-            localStorage.removeItem('rewardsAdminEmail');
+            if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+            currentEmail = null; currentDashboardId = null;
+            safeRemove('rewardsAdminEmail');
             emailInput.value = '';
-            
             textEmail.textContent = "Belum disetel";
             textEmail.classList.add('text-slate-700');
             textEmail.classList.remove('text-blue-600', 'font-bold');
-            
-            // Sembunyikan indikator & tombol logout
             document.getElementById('sync-status').classList.add('hidden');
             document.getElementById('sync-status').classList.remove('flex');
-            
             document.getElementById('logout-btn').classList.add('hidden');
             document.getElementById('logout-btn').classList.remove('flex');
-            
             document.getElementById('dashboard-content').classList.add('hidden');
             document.getElementById('dashboard-content').classList.remove('flex');
             document.getElementById('header-tools').classList.add('hidden');
@@ -474,25 +412,63 @@
             document.getElementById('welcome-message').classList.remove('hidden');
         });
 
-        // Fungsi update data
+        // ==========================================
+        // 4. KONEKSI CLOUD OTOMATIS (FIREBASE)
+        // ==========================================
+        function checkAutoLogin() {
+            const savedEmail = safeGet('rewardsAdminEmail');
+            if (savedEmail) {
+                document.getElementById('email-input').value = savedEmail;
+                loadDashboard();
+            }
+        }
+
+        if (isFirebaseConfigProvided) {
+            try {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                db = getFirestore(app);
+
+                let authResolved = false;
+                onAuthStateChanged(auth, (user) => {
+                    firebaseUser = user;
+                    if (!authResolved) {
+                        authResolved = true;
+                        checkAutoLogin();
+                    }
+                });
+
+                const initAuth = async () => {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                };
+                initAuth();
+            } catch (error) {
+                checkAutoLogin(); // Fallback Lokal
+            }
+        } else {
+            checkAutoLogin(); // Mode File Murni Lokal
+        }
+
+        // ==========================================
+        // 5. UPDATE DATA & RENDER (Sama seperti sebelumnya)
+        // ==========================================
         const updateData = (newUsers, newLogs, newAdmin) => {
-            users = newUsers;
-            logs = newLogs;
-            if (newAdmin) currentAdmin = newAdmin;
+            users = newUsers; logs = newLogs; if (newAdmin) currentAdmin = newAdmin;
+            renderApp();
             
-            renderApp(); // Render UI Instan
-            
-            // Simpan ke Cloud jika terhubung
             if (isFirebaseConfigProvided && firebaseUser && db && currentDashboardId) {
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'dashboards', currentDashboardId);
                 setDoc(docRef, { users, logs, currentAdmin }).catch(console.error);
             } else if (currentDashboardId) {
-                // Mode Lokal: Simpan permanen ke memori browser (localStorage)
-                localStorage.setItem(`rewardsData_${currentDashboardId}`, JSON.stringify({ users, logs, currentAdmin }));
+                safeSet(`rewardsData_${currentDashboardId}`, JSON.stringify({ users, logs, currentAdmin }));
             }
         };
 
-        // Render UI Data
         function renderApp() {
             const btn = document.getElementById('toggle-manage-btn');
             if (isManageMode) {
@@ -502,7 +478,7 @@
             }
             renderUsers();
             renderLogs();
-            lucide.createIcons();
+            renderIcons();
         }
 
         function renderUsers() {
@@ -518,15 +494,10 @@
 
                 if (isHighPoints) {
                     rowBgClass = 'bg-orange-100 hover:bg-orange-200 border-l-4 border-l-red-600 animate-pulse-custom shadow-inner relative z-10';
-                } else if (editCount === 1) {
-                    rowBgClass = 'bg-emerald-100 hover:bg-emerald-200 border-l-4 border-transparent';
-                } else if (editCount === 2) {
-                    rowBgClass = 'bg-blue-100 hover:bg-blue-200 border-l-4 border-transparent';
-                } else if (editCount === 3) {
-                    rowBgClass = 'bg-amber-100 hover:bg-amber-200 border-l-4 border-transparent';
-                } else if (editCount >= 4) {
-                    rowBgClass = 'bg-rose-100 hover:bg-rose-200 border-l-4 border-transparent';
-                }
+                } else if (editCount === 1) { rowBgClass = 'bg-emerald-100 hover:bg-emerald-200 border-l-4 border-transparent';
+                } else if (editCount === 2) { rowBgClass = 'bg-blue-100 hover:bg-blue-200 border-l-4 border-transparent';
+                } else if (editCount === 3) { rowBgClass = 'bg-amber-100 hover:bg-amber-200 border-l-4 border-transparent';
+                } else if (editCount >= 4) { rowBgClass = 'bg-rose-100 hover:bg-rose-200 border-l-4 border-transparent'; }
 
                 const roleIsAdmin = (user.role || '').toLowerCase().includes('admin');
                 const roleClass = roleIsAdmin ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700';
@@ -534,34 +505,26 @@
                 const row = document.createElement('div');
                 row.className = `p-4 transition-all flex items-center justify-between gap-3 md:gap-4 group cursor-grab active:cursor-grabbing ${rowBgClass}`;
                 row.draggable = true;
-                row.dataset.index = index;
-                row.title = isHighPoints ? "Pencapaian Poin Tinggi!" : "Klik dan tahan untuk menggeser posisi";
-
-                // Event Listener Drag & Drop
-                row.addEventListener('dragstart', (e) => { dragItemIndex = index; });
-                row.addEventListener('dragenter', (e) => { dragOverItemIndex = index; });
-                row.addEventListener('dragover', (e) => { e.preventDefault(); });
+                
+                row.addEventListener('dragstart', () => dragItemIndex = index);
+                row.addEventListener('dragenter', () => dragOverItemIndex = index);
+                row.addEventListener('dragover', (e) => e.preventDefault());
                 row.addEventListener('dragend', handleSort);
 
                 let bonusHTML = '';
                 if (inlineBonusEditId === user.id) {
-                    bonusHTML = `
-                        <div class="flex items-center gap-1 bg-white border border-amber-300 rounded-md p-0.5 shadow-sm" onclick="event.stopPropagation()">
+                    bonusHTML = `<div class="flex items-center gap-1 bg-white border border-amber-300 rounded-md p-0.5 shadow-sm" onclick="event.stopPropagation()">
                             <input type="number" id="inline-bonus-input-${user.id}" value="${inlineBonusEditValue}" class="w-16 md:w-20 text-xs text-right outline-none font-semibold text-slate-700 bg-transparent">
                             <button onclick="event.stopPropagation(); saveInlineBonus(${user.id})" class="p-0.5 text-emerald-600 hover:bg-emerald-50 rounded"><i data-lucide="check" class="w-3 h-3"></i></button>
                             <button onclick="event.stopPropagation(); cancelInlineBonus()" class="p-0.5 text-slate-400 hover:bg-slate-100 rounded"><i data-lucide="x" class="w-3 h-3"></i></button>
                         </div>`;
                 } else if (user.bonus && user.bonus > 0) {
-                    bonusHTML = `
-                        <span onclick="event.stopPropagation(); openInlineBonus(${user.id}, ${user.bonus})" class="cursor-pointer px-2 py-0.5 rounded-full text-[10px] md:text-xs font-medium shrink-0 bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors border border-amber-200" title="Klik untuk mengubah total bonus">
-                            ${user.bonus.toLocaleString('id-ID')}
-                        </span>`;
+                    bonusHTML = `<span onclick="event.stopPropagation(); openInlineBonus(${user.id}, ${user.bonus})" class="cursor-pointer px-2 py-0.5 rounded-full text-[10px] md:text-xs font-medium shrink-0 bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors border border-amber-200">${user.bonus.toLocaleString('id-ID')}</span>`;
                 }
 
                 let pointsHTML = '';
                 if (inlinePointEditId === user.id) {
-                    pointsHTML = `
-                        <div class="flex items-center gap-1 bg-white border border-blue-300 rounded-md p-1 shadow-sm absolute right-0 top-1/2 -translate-y-1/2 z-10">
+                    pointsHTML = `<div class="flex items-center gap-1 bg-white border border-blue-300 rounded-md p-1 shadow-sm absolute right-0 top-1/2 -translate-y-1/2 z-10">
                             <input type="number" id="inline-point-input-${user.id}" value="${inlinePointEditValue}" class="w-16 md:w-24 text-sm md:text-base text-right outline-none font-semibold text-slate-700 bg-transparent">
                             <button onclick="saveInlinePoints(${user.id})" class="p-1 text-emerald-600 hover:bg-emerald-50 rounded"><i data-lucide="check" class="w-4 h-4"></i></button>
                             <button onclick="cancelInlinePoints()" class="p-1 text-slate-400 hover:bg-slate-100 rounded"><i data-lucide="x" class="w-4 h-4"></i></button>
@@ -569,10 +532,8 @@
                 }
 
                 row.innerHTML = `
-                    <div class="flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-full bg-slate-100 text-slate-500 font-bold text-xs md:text-sm group-hover:bg-blue-100 group-hover:text-blue-700 cursor-grab active:cursor-grabbing flex-shrink-0 transition-colors">
-                        ${index + 1}
-                    </div>
-                    <div class="flex-1 min-w-0 cursor-pointer p-1.5 -m-1.5 rounded-lg hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-colors" onclick="openEditModal(${user.id})" title="Klik untuk mengedit profil akun">
+                    <div class="flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-full bg-slate-100 text-slate-500 font-bold text-xs md:text-sm group-hover:bg-blue-100 group-hover:text-blue-700 cursor-grab active:cursor-grabbing flex-shrink-0 transition-colors">${index + 1}</div>
+                    <div class="flex-1 min-w-0 cursor-pointer p-1.5 -m-1.5 rounded-lg hover:bg-slate-100 border border-transparent hover:border-slate-200 transition-colors" onclick="openEditModal(${user.id})">
                         <div class="flex flex-wrap items-center gap-2 mb-0.5 md:mb-1">
                             <p class="font-medium text-slate-900 truncate text-sm md:text-base">${user.name}</p>
                             <span class="px-2 py-0.5 rounded-full text-[10px] md:text-xs font-medium shrink-0 ${roleClass}">${user.role || 'Pengguna'}</span>
@@ -583,29 +544,18 @@
                     <div class="flex items-center gap-4 md:gap-6 shrink-0">
                         <div class="text-right relative">
                             ${pointsHTML}
-                            <div onclick="openInlinePoints(${user.id}, ${user.points})" class="cursor-pointer p-1.5 -m-1.5 rounded-lg hover:bg-red-50 border border-transparent transition-colors ${inlinePointEditId === user.id ? 'invisible' : ''}" title="${isHighPoints ? 'Pencapaian Poin Tinggi! Klik untuk mengubah' : 'Klik untuk mengubah poin'}">
+                            <div onclick="openInlinePoints(${user.id}, ${user.points})" class="cursor-pointer p-1.5 -m-1.5 rounded-lg hover:bg-red-50 border border-transparent transition-colors ${inlinePointEditId === user.id ? 'invisible' : ''}">
                                 <p class="text-[10px] md:hidden font-medium uppercase tracking-wider mb-0.5 ${isHighPoints ? 'text-red-400' : 'text-slate-400'}">Poin</p>
-                                <p class="${isHighPoints ? 'text-red-600 font-black text-lg md:text-xl drop-shadow-md' : 'font-semibold text-slate-700 text-sm md:text-base'}">
-                                    ${user.points.toLocaleString('id-ID')}
-                                </p>
+                                <p class="${isHighPoints ? 'text-red-600 font-black text-lg md:text-xl drop-shadow-md' : 'font-semibold text-slate-700 text-sm md:text-base'}">${user.points.toLocaleString('id-ID')}</p>
                             </div>
                         </div>
-                        ${isManageMode ? `
-                        <div class="flex border-l border-slate-200 pl-4 md:pl-6">
-                            <button onclick="event.stopPropagation(); openEditModal(${user.id})" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors bg-slate-50 md:bg-transparent border border-slate-100 md:border-transparent" title="Edit Akun">
-                                <i data-lucide="edit-2" class="w-4 h-4 md:w-5 md:h-5"></i>
-                            </button>
-                        </div>` : ''}
+                        ${isManageMode ? `<div class="flex border-l border-slate-200 pl-4 md:pl-6"><button onclick="event.stopPropagation(); openEditModal(${user.id})" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"><i data-lucide="edit-2" class="w-4 h-4 md:w-5 md:h-5"></i></button></div>` : ''}
                     </div>
                 `;
                 container.appendChild(row);
 
-                if (inlinePointEditId === user.id) {
-                    setTimeout(() => document.getElementById(`inline-point-input-${user.id}`).focus(), 0);
-                }
-                if (inlineBonusEditId === user.id) {
-                    setTimeout(() => document.getElementById(`inline-bonus-input-${user.id}`).focus(), 0);
-                }
+                if (inlinePointEditId === user.id) setTimeout(() => document.getElementById(`inline-point-input-${user.id}`).focus(), 0);
+                if (inlineBonusEditId === user.id) setTimeout(() => document.getElementById(`inline-bonus-input-${user.id}`).focus(), 0);
             });
         }
 
@@ -614,26 +564,16 @@
             container.innerHTML = '';
             
             if (logs.length === 0) {
-                container.innerHTML = `
-                    <div class="p-8 text-center text-slate-500 flex flex-col items-center">
-                        <i data-lucide="alert-circle" class="w-8 h-8 mb-2 opacity-50"></i>
-                        <p>Belum ada aktivitas terekam.</p>
-                    </div>`;
+                container.innerHTML = `<div class="p-8 text-center text-slate-500 flex flex-col items-center"><i data-lucide="alert-circle" class="w-8 h-8 mb-2 opacity-50"></i><p>Belum ada aktivitas terekam.</p></div>`;
                 return;
             }
 
             logs.forEach(log => {
                 const li = document.createElement('li');
                 li.className = "p-4 hover:bg-slate-50 transition-colors";
-                
                 let pointsChange = '';
                 if (log.oldPoints !== 0 || log.newPoints !== 0) {
-                    pointsChange = `
-                        <div class="flex items-center gap-2 text-[10px] md:text-xs font-medium">
-                            <span class="px-2 py-1 bg-red-50 text-red-600 rounded">${log.oldPoints.toLocaleString('id-ID')}</span>
-                            <span class="text-slate-400">→</span>
-                            <span class="px-2 py-1 bg-emerald-50 text-emerald-600 rounded">${log.newPoints.toLocaleString('id-ID')}</span>
-                        </div>`;
+                    pointsChange = `<div class="flex items-center gap-2 text-[10px] md:text-xs font-medium"><span class="px-2 py-1 bg-red-50 text-red-600 rounded">${log.oldPoints.toLocaleString('id-ID')}</span><span class="text-slate-400">→</span><span class="px-2 py-1 bg-emerald-50 text-emerald-600 rounded">${log.newPoints.toLocaleString('id-ID')}</span></div>`;
                 }
 
                 li.innerHTML = `
@@ -641,73 +581,41 @@
                         <span class="text-xs md:text-sm font-semibold text-slate-800 break-words">${log.admin}</span>
                         <span class="text-[10px] md:text-xs text-slate-400 shrink-0 text-right">${log.timestamp}</span>
                     </div>
-                    <p class="text-xs md:text-sm text-slate-600 mb-2">
-                        ${log.action} <span class="font-medium text-slate-800">${log.targetUser !== 'Sistem' ? log.targetUser : ''}</span>
-                    </p>
+                    <p class="text-xs md:text-sm text-slate-600 mb-2">${log.action} <span class="font-medium text-slate-800">${log.targetUser !== 'Sistem' ? log.targetUser : ''}</span></p>
                     ${pointsChange}
                 `;
                 container.appendChild(li);
             });
         }
 
-        // --- EDIT POIN CEPAT (INLINE) ---
-        window.openInlinePoints = (id, value) => {
-            inlinePointEditId = id;
-            inlinePointEditValue = value;
-            renderApp();
-        };
-        window.cancelInlinePoints = () => {
-            inlinePointEditId = null;
-            renderApp();
-        };
+        // ==========================================
+        // 6. FUNGSI EDIT DAN MODAL (Sama seperti sebelumnya)
+        // ==========================================
+        
+        document.getElementById('toggle-manage-btn').addEventListener('click', () => { isManageMode = !isManageMode; renderApp(); });
+
+        window.openInlinePoints = (id, value) => { inlinePointEditId = id; inlinePointEditValue = value; renderApp(); };
+        window.cancelInlinePoints = () => { inlinePointEditId = null; renderApp(); };
         window.saveInlinePoints = (id) => {
-            const input = document.getElementById(`inline-point-input-${id}`);
-            const parsed = parseInt(input.value, 10);
+            const parsed = parseInt(document.getElementById(`inline-point-input-${id}`).value, 10);
             if (isNaN(parsed) || parsed < 0) return alert("Poin tidak valid!");
-            
             const user = users.find(u => u.id === id);
             inlinePointEditId = null; 
             
             if (parsed !== user.points) {
-                // Gunakan email saat ini sebagai nama admin di Log
                 const adminName = currentEmail.split('@')[0];
                 const newLog = { id: Date.now(), timestamp: new Date().toLocaleString('id-ID'), admin: adminName, targetUser: user.name, action: 'Edit Poin', oldPoints: user.points, newPoints: parsed };
-                
                 const isToday = user.editedDate === new Date().toDateString();
-                const newEditCount = isToday ? (user.editCountToday || 0) + 1 : 1;
-                
-                const updatedUser = { ...user, points: parsed, editedDate: new Date().toDateString(), editCountToday: newEditCount };
-                const otherUsers = users.filter(u => u.id !== id);
-                
-                updateData([...otherUsers, updatedUser], [newLog, ...logs]); 
-            } else {
-                renderApp(); 
-            }
+                const updatedUser = { ...user, points: parsed, editedDate: new Date().toDateString(), editCountToday: isToday ? (user.editCountToday || 0) + 1 : 1 };
+                updateData([...users.filter(u => u.id !== id), updatedUser], [newLog, ...logs]); 
+            } else { renderApp(); }
         };
         
-        // Listener Enter untuk Edit Poin & Bonus
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                if (inlinePointEditId && e.target.id === `inline-point-input-${inlinePointEditId}`) saveInlinePoints(inlinePointEditId);
-                if (inlineBonusEditId && e.target.id === `inline-bonus-input-${inlineBonusEditId}`) saveInlineBonus(inlineBonusEditId);
-            }
-        });
-
-        // --- EDIT BONUS CEPAT (INLINE) ---
-        window.openInlineBonus = (id, value) => {
-            inlineBonusEditId = id;
-            inlineBonusEditValue = value;
-            renderApp();
-        };
-        window.cancelInlineBonus = () => {
-            inlineBonusEditId = null;
-            renderApp();
-        };
+        window.openInlineBonus = (id, value) => { inlineBonusEditId = id; inlineBonusEditValue = value; renderApp(); };
+        window.cancelInlineBonus = () => { inlineBonusEditId = null; renderApp(); };
         window.saveInlineBonus = (id) => {
-            const input = document.getElementById(`inline-bonus-input-${id}`);
-            const parsed = parseInt(input.value, 10) || 0;
+            const parsed = parseInt(document.getElementById(`inline-bonus-input-${id}`).value, 10) || 0;
             if (parsed < 0) return alert("Bonus tidak valid!");
-            
             const user = users.find(u => u.id === id);
             const currentBonus = user.bonus || 0;
             inlineBonusEditId = null; 
@@ -715,162 +623,113 @@
             if (parsed !== currentBonus) {
                 const adminName = currentEmail.split('@')[0];
                 const newLog = { id: Date.now(), timestamp: new Date().toLocaleString('id-ID'), admin: adminName, targetUser: user.name, action: 'Edit Bonus', oldPoints: currentBonus, newPoints: parsed };
-                
                 const isToday = user.editedDate === new Date().toDateString();
-                const newEditCount = isToday ? (user.editCountToday || 0) + 1 : 1;
-                
-                const updatedUser = { ...user, bonus: parsed, editedDate: new Date().toDateString(), editCountToday: newEditCount };
-                const otherUsers = users.filter(u => u.id !== id);
-                
-                updateData([...otherUsers, updatedUser], [newLog, ...logs]); 
-            } else {
-                renderApp();
-            }
+                const updatedUser = { ...user, bonus: parsed, editedDate: new Date().toDateString(), editCountToday: isToday ? (user.editCountToday || 0) + 1 : 1 };
+                updateData([...users.filter(u => u.id !== id), updatedUser], [newLog, ...logs]); 
+            } else { renderApp(); }
         };
 
-        // --- FUNGSI DRAG AND DROP (URUTKAN) ---
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                if (inlinePointEditId && e.target.id === `inline-point-input-${inlinePointEditId}`) saveInlinePoints(inlinePointEditId);
+                if (inlineBonusEditId && e.target.id === `inline-bonus-input-${inlineBonusEditId}`) saveInlineBonus(inlineBonusEditId);
+            }
+        });
+
         function handleSort() {
             if (dragItemIndex !== null && dragOverItemIndex !== null && dragItemIndex !== dragOverItemIndex) {
                 let _users = [...users];
                 const draggedItem = _users.splice(dragItemIndex, 1)[0];
                 _users.splice(dragOverItemIndex, 0, draggedItem);
-                
                 const adminName = currentEmail.split('@')[0];
                 const newLog = { id: Date.now(), timestamp: new Date().toLocaleString('id-ID'), admin: adminName, targetUser: draggedItem.name, action: 'Menggeser urutan akun', oldPoints: 0, newPoints: 0 };
                 updateData(_users, [newLog, ...logs]);
             }
-            dragItemIndex = null;
-            dragOverItemIndex = null;
+            dragItemIndex = null; dragOverItemIndex = null;
         }
 
-        // --- MODAL TAMBAH PENGGUNA ---
         const addModal = document.getElementById('add-modal');
         document.getElementById('add-user-btn').addEventListener('click', () => {
-            document.getElementById('add-name').value = '';
-            document.getElementById('add-email').value = '';
-            document.getElementById('add-points').value = '0';
-            document.getElementById('add-bonus').value = '0';
-            document.getElementById('add-role').value = 'Pengguna';
-            addModal.classList.remove('hidden');
+            document.getElementById('add-name').value = ''; document.getElementById('add-email').value = '';
+            document.getElementById('add-points').value = '0'; document.getElementById('add-bonus').value = '0';
+            document.getElementById('add-role').value = 'Pengguna'; addModal.classList.remove('hidden');
         });
         document.getElementById('close-add-modal').addEventListener('click', () => addModal.classList.add('hidden'));
         document.getElementById('cancel-add-modal').addEventListener('click', () => addModal.classList.add('hidden'));
         document.getElementById('save-add-modal').addEventListener('click', () => {
-            const name = document.getElementById('add-name').value.trim();
-            const email = document.getElementById('add-email').value.trim();
-            const points = parseInt(document.getElementById('add-points').value, 10) || 0;
-            const bonus = parseInt(document.getElementById('add-bonus').value, 10) || 0;
+            const name = document.getElementById('add-name').value.trim(), email = document.getElementById('add-email').value.trim();
+            const points = parseInt(document.getElementById('add-points').value, 10) || 0, bonus = parseInt(document.getElementById('add-bonus').value, 10) || 0;
             const role = document.getElementById('add-role').value.trim() || 'Pengguna';
 
             if (!name || !email) return alert("Nama dan Email wajib diisi!");
-            if (points < 0 || bonus < 0) return alert("Poin dan Bonus tidak boleh bernilai negatif!");
+            if (points < 0 || bonus < 0) return alert("Poin dan Bonus tidak boleh negatif!");
             
             const adminName = currentEmail.split('@')[0];
             const newUser = { id: Date.now(), name, email, points, bonus, role };
             const newLog = { id: Date.now()+1, timestamp: new Date().toLocaleString('id-ID'), admin: adminName, targetUser: name, action: 'Tambah Akun Baru', oldPoints: 0, newPoints: points };
-            
-            updateData([...users, newUser], [newLog, ...logs]);
-            addModal.classList.add('hidden');
+            updateData([...users, newUser], [newLog, ...logs]); addModal.classList.add('hidden');
         });
 
-        // --- MODAL PENGATURAN (EDIT) PENGGUNA ---
         const editModal = document.getElementById('edit-modal');
         window.openEditModal = (id) => {
-            const user = users.find(u => u.id === id);
-            if (!user) return;
-            document.getElementById('edit-id').value = user.id;
-            document.getElementById('edit-name').value = user.name;
-            document.getElementById('edit-email').value = user.email;
-            document.getElementById('edit-points').value = user.points;
-            document.getElementById('edit-bonus').value = user.bonus || 0;
-            document.getElementById('edit-role').value = user.role || '';
+            const user = users.find(u => u.id === id); if (!user) return;
+            document.getElementById('edit-id').value = user.id; document.getElementById('edit-name').value = user.name;
+            document.getElementById('edit-email').value = user.email; document.getElementById('edit-points').value = user.points;
+            document.getElementById('edit-bonus').value = user.bonus || 0; document.getElementById('edit-role').value = user.role || '';
             editModal.classList.remove('hidden');
         };
         document.getElementById('close-edit-modal').addEventListener('click', () => editModal.classList.add('hidden'));
         document.getElementById('cancel-edit-modal').addEventListener('click', () => editModal.classList.add('hidden'));
         document.getElementById('save-edit-modal').addEventListener('click', () => {
             const id = parseInt(document.getElementById('edit-id').value, 10);
-            const name = document.getElementById('edit-name').value.trim();
-            const email = document.getElementById('edit-email').value.trim();
-            const points = parseInt(document.getElementById('edit-points').value, 10) || 0;
-            const bonus = parseInt(document.getElementById('edit-bonus').value, 10) || 0;
+            const name = document.getElementById('edit-name').value.trim(), email = document.getElementById('edit-email').value.trim();
+            const points = parseInt(document.getElementById('edit-points').value, 10) || 0, bonus = parseInt(document.getElementById('edit-bonus').value, 10) || 0;
             const role = document.getElementById('edit-role').value.trim() || 'Pengguna';
 
             if (!name || !email) return alert("Nama dan Email wajib diisi!");
             if (points < 0 || bonus < 0) return alert("Poin dan Bonus tidak boleh negatif!");
 
-            const user = users.find(u => u.id === id);
-            let newLogs = logs;
-            const currentBonus = user.bonus || 0;
-            const adminName = currentEmail.split('@')[0];
-
-            if (points !== user.points || bonus !== currentBonus || name !== user.name || role !== user.role) {
-                const newLog = { id: Date.now(), timestamp: new Date().toLocaleString('id-ID'), admin: adminName, targetUser: name, action: 'Ubah Pengaturan Akun', oldPoints: user.points, newPoints: points };
-                newLogs = [newLog, ...logs];
+            const user = users.find(u => u.id === id); let newLogs = logs;
+            if (points !== user.points || bonus !== (user.bonus || 0) || name !== user.name || role !== user.role) {
+                newLogs = [{ id: Date.now(), timestamp: new Date().toLocaleString('id-ID'), admin: currentEmail.split('@')[0], targetUser: name, action: 'Ubah Pengaturan Akun', oldPoints: user.points, newPoints: points }, ...logs];
             }
-
             const isToday = user.editedDate === new Date().toDateString();
-            const newEditCount = isToday ? (user.editCountToday || 0) + 1 : 1;
-            const updatedUser = { ...user, name, email, points, bonus, role, editedDate: new Date().toDateString(), editCountToday: newEditCount };
-            const otherUsers = users.filter(u => u.id !== id);
-            
-            updateData([...otherUsers, updatedUser], newLogs);
-            editModal.classList.add('hidden');
+            const updatedUser = { ...user, name, email, points, bonus, role, editedDate: new Date().toDateString(), editCountToday: isToday ? (user.editCountToday || 0) + 1 : 1 };
+            updateData([...users.filter(u => u.id !== id), updatedUser], newLogs); editModal.classList.add('hidden');
         });
 
-        // --- HAPUS PENGGUNA ---
         const deleteModal = document.getElementById('delete-modal');
         document.getElementById('delete-user-trigger').addEventListener('click', () => {
             userToDeleteId = parseInt(document.getElementById('edit-id').value, 10);
-            const user = users.find(u => u.id === userToDeleteId);
-            document.getElementById('delete-user-name').textContent = user.name;
-            editModal.classList.add('hidden');
-            deleteModal.classList.remove('hidden');
+            document.getElementById('delete-user-name').textContent = users.find(u => u.id === userToDeleteId).name;
+            editModal.classList.add('hidden'); deleteModal.classList.remove('hidden');
         });
         document.getElementById('cancel-delete-modal').addEventListener('click', () => deleteModal.classList.add('hidden'));
         document.getElementById('confirm-delete-btn').addEventListener('click', () => {
             const user = users.find(u => u.id === userToDeleteId);
-            const adminName = currentEmail.split('@')[0];
-            const newLog = { id: Date.now(), timestamp: new Date().toLocaleString('id-ID'), admin: adminName, targetUser: user.name, action: 'Hapus Akun', oldPoints: user.points, newPoints: 0 };
-            
-            const newUsers = users.filter(u => u.id !== userToDeleteId);
-            updateData(newUsers, [newLog, ...logs]);
-            deleteModal.classList.add('hidden');
+            const newLog = { id: Date.now(), timestamp: new Date().toLocaleString('id-ID'), admin: currentEmail.split('@')[0], targetUser: user.name, action: 'Hapus Akun', oldPoints: user.points, newPoints: 0 };
+            updateData(users.filter(u => u.id !== userToDeleteId), [newLog, ...logs]); deleteModal.classList.add('hidden');
         });
 
-        // --- BACKUP & RESTORE DATA KE/DARI KOMPUTER ---
         document.getElementById('backup-btn').addEventListener('click', () => {
             const dataToSave = { users, logs };
             const blob = new Blob([JSON.stringify(dataToSave, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `Backup-Rewards-${new Date().toISOString().slice(0, 10)}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            const a = document.createElement('a'); a.href = url; a.download = `Backup-Rewards-${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
         });
 
         document.getElementById('file-upload').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+            const file = e.target.files[0]; if (!file) return;
             const reader = new FileReader();
             reader.onload = (event) => {
                 try {
                     const parsedData = JSON.parse(event.target.result);
-                    if (parsedData.users && parsedData.logs) {
-                        updateData(parsedData.users, parsedData.logs);
-                        alert("Data berhasil dipulihkan!");
-                    } else {
-                        alert("Format file backup tidak valid!");
-                    }
-                } catch (error) {
-                    alert("Gagal membaca file backup.");
-                }
+                    if (parsedData.users && parsedData.logs) { updateData(parsedData.users, parsedData.logs); alert("Data berhasil dipulihkan!"); }
+                    else { alert("Format file backup tidak valid!"); }
+                } catch (error) { alert("Gagal membaca file backup."); }
             };
-            reader.readAsText(file);
-            e.target.value = ''; // Reset input
+            reader.readAsText(file); e.target.value = '';
         });
 
     </script>
