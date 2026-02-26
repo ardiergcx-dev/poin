@@ -25,79 +25,95 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen p-3 md:p-8">
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
 
-    <!-- HEADER -->
-    <header class="mb-6 md:mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-            <div class="flex items-center gap-2 md:gap-3 mb-2">
-                <i data-lucide="activity" class="w-6 h-6 md:w-8 md:h-8 text-blue-600"></i>
-                <h1 class="text-xl md:text-3xl font-bold text-slate-900">Sistem Pemantauan Poin</h1>
-            </div>
-            <div class="flex items-center gap-2 text-sm md:text-base text-slate-500">
-                <span>Admin Aktif:</span>
-                <div id="admin-display-container" class="flex items-center">
-                    <span id="current-admin-text" class="font-medium text-slate-700 cursor-pointer border-b border-dashed border-slate-400 hover:text-blue-600 hover:border-blue-600 transition-colors" title="Klik untuk mengubah nama admin">Admin Utama</span>
+    <!-- APLIKASI UTAMA -->
+    <div id="main-app" class="p-3 md:p-8 max-w-7xl mx-auto">
+        <!-- HEADER -->
+        <header class="mb-6 md:mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-2 md:gap-3 mb-2">
+                    <i data-lucide="activity" class="w-6 h-6 md:w-8 md:h-8 text-blue-600"></i>
+                    <h1 class="text-xl md:text-3xl font-bold text-slate-900">Sistem Pemantauan Poin</h1>
                 </div>
-                <div id="admin-edit-container" class="hidden items-center gap-1">
-                    <input type="text" id="admin-input" class="px-2 py-0.5 border border-blue-300 rounded text-slate-800 outline-none w-32 md:w-48 bg-white text-sm">
-                    <button id="save-admin-btn" class="p-1 text-emerald-600 hover:bg-emerald-50 rounded"><i data-lucide="check" class="w-4 h-4"></i></button>
-                    <button id="cancel-admin-btn" class="p-1 text-slate-400 hover:bg-slate-100 rounded"><i data-lucide="x" class="w-4 h-4"></i></button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Tombol Backup & Recovery -->
-        <div class="flex items-center gap-2 bg-white p-2 rounded-xl shadow-sm border border-slate-200">
-            <i data-lucide="database" class="w-5 h-5 text-slate-400 mx-2 hidden md:block"></i>
-            <button id="backup-btn" class="flex flex-1 items-center justify-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition-colors">
-                <i data-lucide="download" class="w-4 h-4"></i> Backup
-            </button>
-            <input type="file" accept=".json" id="file-upload" class="hidden">
-            <label for="file-upload" class="flex flex-1 items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer mb-0">
-                <i data-lucide="upload" class="w-4 h-4"></i> Pulihkan
-            </label>
-        </div>
-    </header>
-
-    <div class="flex flex-col gap-6 md:gap-8">
-        <!-- DAFTAR PENGGUNA -->
-        <div class="space-y-6">
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="p-4 md:p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                    <h2 class="text-base md:text-lg font-semibold flex items-center gap-2">
-                        <i data-lucide="users" class="w-4 h-4 md:w-5 md:h-5 text-blue-500"></i> Daftar Akun
-                    </h2>
-                    <div class="flex items-center gap-2">
-                        <button id="toggle-manage-btn" class="p-1.5 md:p-2 rounded-lg transition-colors border shadow-sm flex items-center justify-center bg-white text-slate-600 hover:bg-slate-50 border-slate-200" title="Buka Mode Pengaturan">
-                            <i data-lucide="settings" class="w-4 h-4"></i>
-                        </button>
-                        <button id="add-user-btn" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs md:text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 shadow-sm">
-                            <i data-lucide="user-plus" class="w-3.5 h-3.5 md:w-4 md:h-4"></i>
-                            <span class="hidden sm:inline">Tambah Akun</span>
-                            <span class="sm:hidden">Tambah</span>
+                <div class="flex items-center gap-2 text-sm md:text-base text-slate-500">
+                    <span>Admin Email:</span>
+                    <div id="email-display-container" class="flex items-center gap-2">
+                        <span id="current-email-text" class="font-medium text-slate-700 cursor-pointer border-b border-dashed border-slate-400 hover:text-blue-600 hover:border-blue-600 transition-colors" title="Klik untuk memasukkan email">Belum disetel</span>
+                        <button id="logout-btn" class="hidden items-center justify-center p-1 text-red-500 hover:bg-red-100 rounded-md transition-colors" title="Keluar Akun">
+                            <i data-lucide="log-out" class="w-4 h-4 md:w-5 md:h-5"></i>
                         </button>
                     </div>
-                </div>
-                <div id="users-container" class="divide-y divide-slate-100">
-                    <!-- Data Pengguna Dimuat Di Sini -->
+                    <div id="email-edit-container" class="hidden items-center gap-1">
+                        <input type="email" id="email-input" class="px-2 py-0.5 border border-blue-300 rounded text-slate-800 outline-none w-48 md:w-64 bg-white text-sm" placeholder="Masukkan email anda...">
+                        <button id="save-email-btn" class="p-1 text-emerald-600 hover:bg-emerald-50 rounded" title="Simpan & Muat Data"><i data-lucide="check" class="w-4 h-4"></i></button>
+                        <button id="cancel-email-btn" class="p-1 text-slate-400 hover:bg-slate-100 rounded hidden" title="Batal"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
                 </div>
             </div>
+            
+            <!-- Tombol Backup & Recovery -->
+            <div id="header-tools" class="hidden items-center gap-2 bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+                <i data-lucide="database" class="w-5 h-5 text-slate-400 mx-2 hidden md:block"></i>
+                <button id="backup-btn" class="flex flex-1 items-center justify-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition-colors">
+                    <i data-lucide="download" class="w-4 h-4"></i> Backup
+                </button>
+                <input type="file" accept=".json" id="file-upload" class="hidden">
+                <label for="file-upload" class="flex flex-1 items-center justify-center gap-2 px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer mb-0">
+                    <i data-lucide="upload" class="w-4 h-4"></i> Pulihkan
+                </label>
+            </div>
+        </header>
+
+        <!-- PESAN SELAMAT DATANG (Tampil jika email belum dimasukkan) -->
+        <div id="welcome-message" class="text-center py-24 md:py-32">
+            <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="mail" class="w-10 h-10 text-blue-500"></i>
+            </div>
+            <h2 class="text-2xl md:text-3xl font-bold text-slate-800 mb-2">Mulai Dasbor Anda</h2>
+            <p class="text-slate-500 max-w-md mx-auto">Silakan klik tulisan <strong class="text-slate-700">"Belum disetel"</strong> di bagian atas dan masukkan email Anda untuk memuat atau membuat ruang kerja baru.</p>
         </div>
 
-        <!-- LOG AKTIVITAS -->
-        <div class="space-y-6">
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="p-4 md:p-5 border-b border-slate-100 bg-slate-50/50">
-                    <h2 class="text-base md:text-lg font-semibold flex items-center gap-2">
-                        <i data-lucide="history" class="w-4 h-4 md:w-5 md:h-5 text-emerald-500"></i> Log Aktivitas
-                    </h2>
-                    <p class="text-[10px] md:text-xs text-slate-500 mt-1">Mencatat aktivitas dan perubahan poin.</p>
+        <!-- KONTEN DASBOR (Tampil setelah email dimasukkan) -->
+        <div id="dashboard-content" class="hidden flex-col gap-6 md:gap-8">
+            <!-- DAFTAR PENGGUNA -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-4 md:p-5 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+                        <h2 class="text-base md:text-lg font-semibold flex items-center gap-2">
+                            <i data-lucide="users" class="w-4 h-4 md:w-5 md:h-5 text-blue-500"></i> Daftar Akun
+                        </h2>
+                        <div class="flex items-center gap-2">
+                            <button id="toggle-manage-btn" class="p-1.5 md:p-2 rounded-lg transition-colors border shadow-sm flex items-center justify-center bg-white text-slate-600 hover:bg-slate-50 border-slate-200" title="Buka Mode Pengaturan">
+                                <i data-lucide="settings" class="w-4 h-4"></i>
+                            </button>
+                            <button id="add-user-btn" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs md:text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5 shadow-sm">
+                                <i data-lucide="user-plus" class="w-3.5 h-3.5 md:w-4 md:h-4"></i>
+                                <span class="hidden sm:inline">Tambah Akun</span>
+                                <span class="sm:hidden">Tambah</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="users-container" class="divide-y divide-slate-100">
+                        <!-- Data Pengguna Dimuat Di Sini -->
+                    </div>
                 </div>
-                <div class="p-0">
-                    <ul id="logs-container" class="divide-y divide-slate-100">
-                        <!-- Log Aktivitas Dimuat Di Sini -->
-                    </ul>
+            </div>
+
+            <!-- LOG AKTIVITAS -->
+            <div class="space-y-6">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-4 md:p-5 border-b border-slate-100 bg-slate-50/50">
+                        <h2 class="text-base md:text-lg font-semibold flex items-center gap-2">
+                            <i data-lucide="history" class="w-4 h-4 md:w-5 md:h-5 text-emerald-500"></i> Log Aktivitas
+                        </h2>
+                        <p class="text-[10px] md:text-xs text-slate-500 mt-1">Mencatat aktivitas dan perubahan poin.</p>
+                    </div>
+                    <div class="p-0">
+                        <ul id="logs-container" class="divide-y divide-slate-100">
+                            <!-- Log Aktivitas Dimuat Di Sini -->
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -215,26 +231,34 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Cek Keberadaan Konfigurasi Cloud Bawaan
         const isFirebaseConfigProvided = typeof __firebase_config !== 'undefined' && __firebase_config.trim() !== '';
         
-        // State Aplikasi
-        let users = [
+        // Data Dasar Saat Membuat Dasbor Baru
+        const initialUsers = [
             { id: 1, name: 'Budi Santoso', email: 'budi@example.com', points: 1500, bonus: 500, role: 'Pengguna' },
             { id: 4, name: 'Admin Utama', email: 'admin@rewards.local', points: 99999, bonus: 0, role: 'Admin' }
         ];
-        let logs = [
+        const initialLogs = [
             { id: 101, timestamp: new Date().toLocaleString('id-ID'), admin: 'Sistem', targetUser: 'Sistem', action: 'Inisialisasi data awal', oldPoints: 0, newPoints: 0 }
         ];
-        let currentAdmin = "Admin Utama";
+
+        // State Aplikasi
+        let users = [];
+        let logs = [];
         let isManageMode = false;
         
         let db = null;
         let firebaseUser = null;
         let appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         let userToDeleteId = null;
+
+        // Akun Penyimpanan Saat Ini
+        let currentEmail = null;
+        let currentDashboardId = null;
+        let unsubscribeSnapshot = null;
 
         // State Inline Edit
         let inlinePointEditId = null;
@@ -246,7 +270,9 @@
         let dragItemIndex = null;
         let dragOverItemIndex = null;
 
-        // Inisialisasi Firebase HANYA JIKA konfigurasi ada
+        lucide.createIcons();
+
+        // --- INISIALISASI FIREBASE ---
         if (isFirebaseConfigProvided) {
             try {
                 const firebaseConfig = JSON.parse(__firebase_config);
@@ -265,60 +291,155 @@
 
                 onAuthStateChanged(auth, (user) => {
                     firebaseUser = user;
-                    if (user) {
-                        const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'dashboard', 'data');
-                        onSnapshot(docRef, (docSnap) => {
-                            if (docSnap.exists()) {
-                                const data = docSnap.data();
-                                users = data.users || [];
-                                logs = data.logs || [];
-                                currentAdmin = data.currentAdmin || "Admin Utama";
-                            } else {
-                                setDoc(docRef, { users, logs, currentAdmin }).catch(console.error);
-                            }
-                            renderApp();
-                        }, (error) => {
-                            console.error("Gagal terhubung ke penyimpanan:", error);
-                        });
-                    }
                 });
             } catch (error) {
                 console.error("Konfigurasi Firebase tidak valid. Berjalan di Mode Lokal.");
             }
         }
 
-        // Fungsi update data
-        const updateData = (newUsers, newLogs, newAdmin) => {
-            users = newUsers;
-            logs = newLogs;
-            if (newAdmin) currentAdmin = newAdmin;
+        // Fungsi Membersihkan Email menjadi ID Dokumen unik
+        function sanitizeEmail(email) {
+            return email.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+        }
+
+        // --- UI EMAIL / ADMIN AKTIF ---
+        const textEmail = document.getElementById('current-email-text');
+        const editEmailContainer = document.getElementById('email-edit-container');
+        const textEmailContainer = document.getElementById('email-display-container');
+        const emailInput = document.getElementById('email-input');
+        const cancelEmailBtn = document.getElementById('cancel-email-btn');
+
+        textEmail.addEventListener('click', () => {
+            emailInput.value = currentEmail || '';
+            textEmailContainer.classList.add('hidden');
+            editEmailContainer.classList.remove('hidden');
+            editEmailContainer.classList.add('flex');
             
-            // Langsung Render layarnya agar responsif (instan)
-            renderApp();
+            if(currentEmail) cancelEmailBtn.classList.remove('hidden');
+            else cancelEmailBtn.classList.add('hidden');
             
-            // Lakukan sinkronisasi data ke Cloud jika terhubung
+            emailInput.focus();
+        });
+
+        cancelEmailBtn.addEventListener('click', () => {
+            editEmailContainer.classList.add('hidden');
+            editEmailContainer.classList.remove('flex');
+            textEmailContainer.classList.remove('hidden');
+        });
+
+        const loadDashboard = async () => {
+            const email = emailInput.value.trim();
+            if (!email) {
+                alert("Email tidak boleh kosong!");
+                return;
+            }
+
+            const dashId = sanitizeEmail(email);
+            currentEmail = email;
+            currentDashboardId = dashId;
+
+            // Reset UI Header
+            textEmail.textContent = email;
+            textEmail.classList.remove('text-slate-700');
+            textEmail.classList.add('text-blue-600', 'font-bold');
+            editEmailContainer.classList.add('hidden');
+            editEmailContainer.classList.remove('flex');
+            textEmailContainer.classList.remove('hidden');
+
+            // Tampilkan UI Dasbor
+            document.getElementById('welcome-message').classList.add('hidden');
+            document.getElementById('dashboard-content').classList.remove('hidden');
+            document.getElementById('dashboard-content').classList.add('flex');
+            document.getElementById('header-tools').classList.remove('hidden');
+            document.getElementById('header-tools').classList.add('flex');
+
+            // Tampilkan tombol logout
+            document.getElementById('logout-btn').classList.remove('hidden');
+            document.getElementById('logout-btn').classList.add('flex');
+
+            // Hentikan pemantauan data sebelumnya jika ada
+            if (unsubscribeSnapshot) {
+                unsubscribeSnapshot();
+                unsubscribeSnapshot = null;
+            }
+
+            // Muat dari Cloud
             if (isFirebaseConfigProvided && firebaseUser && db) {
-                const docRef = doc(db, 'artifacts', appId, 'users', firebaseUser.uid, 'dashboard', 'data');
-                setDoc(docRef, { users, logs, currentAdmin }).catch(console.error);
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'dashboards', dashId);
+                
+                unsubscribeSnapshot = onSnapshot(docRef, (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        users = data.users || [];
+                        logs = data.logs || [];
+                        renderApp();
+                    } else {
+                        // Jika email belum ada datanya, buat baru
+                        setDoc(docRef, { users: initialUsers, logs: initialLogs }).catch(console.error);
+                    }
+                }, (error) => {
+                    console.error("Gagal sinkronisasi data:", error);
+                });
+            } else {
+                // Mode Lokal
+                users = [...initialUsers];
+                logs = [...initialLogs];
+                renderApp();
             }
         };
 
-        // Render UI Utama
-        function renderApp() {
-            renderHeader();
-            renderUsers();
-            renderLogs();
-            lucide.createIcons(); // Memuat ikon baru setiap kali HTML di-refresh
-        }
+        document.getElementById('save-email-btn').addEventListener('click', loadDashboard);
+        emailInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') loadDashboard(); });
 
-        function renderHeader() {
-            document.getElementById('current-admin-text').textContent = currentAdmin;
+        // Logout
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            if (unsubscribeSnapshot) {
+                unsubscribeSnapshot();
+                unsubscribeSnapshot = null;
+            }
+            currentEmail = null;
+            currentDashboardId = null;
+            
+            textEmail.textContent = "Belum disetel";
+            textEmail.classList.add('text-slate-700');
+            textEmail.classList.remove('text-blue-600', 'font-bold');
+            
+            // Sembunyikan tombol logout
+            document.getElementById('logout-btn').classList.add('hidden');
+            document.getElementById('logout-btn').classList.remove('flex');
+            
+            document.getElementById('dashboard-content').classList.add('hidden');
+            document.getElementById('dashboard-content').classList.remove('flex');
+            document.getElementById('header-tools').classList.add('hidden');
+            document.getElementById('header-tools').classList.remove('flex');
+            document.getElementById('welcome-message').classList.remove('hidden');
+        });
+
+        // Fungsi update data
+        const updateData = (newUsers, newLogs) => {
+            users = newUsers;
+            logs = newLogs;
+            
+            renderApp(); // Render UI Instan
+            
+            // Simpan ke Cloud
+            if (isFirebaseConfigProvided && firebaseUser && db && currentDashboardId) {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'dashboards', currentDashboardId);
+                setDoc(docRef, { users, logs }).catch(console.error);
+            }
+        };
+
+        // Render UI Data
+        function renderApp() {
             const btn = document.getElementById('toggle-manage-btn');
             if (isManageMode) {
                 btn.className = "p-1.5 md:p-2 rounded-lg transition-colors border shadow-sm flex items-center justify-center bg-slate-700 text-white border-slate-700";
             } else {
                 btn.className = "p-1.5 md:p-2 rounded-lg transition-colors border shadow-sm flex items-center justify-center bg-white text-slate-600 hover:bg-slate-50 border-slate-200";
             }
+            renderUsers();
+            renderLogs();
+            lucide.createIcons();
         }
 
         function renderUsers() {
@@ -416,7 +537,6 @@
                 `;
                 container.appendChild(row);
 
-                // Auto-fokus untuk edit cepat
                 if (inlinePointEditId === user.id) {
                     setTimeout(() => document.getElementById(`inline-point-input-${user.id}`).focus(), 0);
                 }
@@ -467,44 +587,6 @@
             });
         }
 
-        // --- MANAGE MODE ---
-        document.getElementById('toggle-manage-btn').addEventListener('click', () => {
-            isManageMode = !isManageMode;
-            renderApp();
-        });
-
-        // --- EDIT NAMA ADMIN ---
-        const textAdmin = document.getElementById('current-admin-text');
-        const editAdminContainer = document.getElementById('admin-edit-container');
-        const textAdminContainer = document.getElementById('admin-display-container');
-        const adminInput = document.getElementById('admin-input');
-
-        textAdmin.addEventListener('click', () => {
-            adminInput.value = currentAdmin;
-            textAdminContainer.classList.add('hidden');
-            editAdminContainer.classList.remove('hidden');
-            editAdminContainer.classList.add('flex');
-            adminInput.focus();
-        });
-
-        const saveAdmin = () => {
-            const newAdmin = adminInput.value.trim() || "Admin Utama";
-            editAdminContainer.classList.add('hidden');
-            editAdminContainer.classList.remove('flex');
-            textAdminContainer.classList.remove('hidden');
-            if (newAdmin !== currentAdmin) {
-                updateData(users, logs, newAdmin);
-            }
-        };
-
-        document.getElementById('save-admin-btn').addEventListener('click', saveAdmin);
-        document.getElementById('cancel-admin-btn').addEventListener('click', () => {
-            editAdminContainer.classList.add('hidden');
-            editAdminContainer.classList.remove('flex');
-            textAdminContainer.classList.remove('hidden');
-        });
-        adminInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') saveAdmin(); });
-
         // --- EDIT POIN CEPAT (INLINE) ---
         window.openInlinePoints = (id, value) => {
             inlinePointEditId = id;
@@ -521,11 +603,12 @@
             if (isNaN(parsed) || parsed < 0) return alert("Poin tidak valid!");
             
             const user = users.find(u => u.id === id);
-            
-            inlinePointEditId = null; // Tutup mode input
+            inlinePointEditId = null; 
             
             if (parsed !== user.points) {
-                const newLog = { id: Date.now(), timestamp: new Date().toLocaleString('id-ID'), admin: currentAdmin, targetUser: user.name, action: 'Edit Poin', oldPoints: user.points, newPoints: parsed };
+                // Gunakan email saat ini sebagai nama admin di Log
+                const adminName = currentEmail.split('@')[0];
+                const newLog = { id: Date.now(), timestamp: new Date().toLocaleString('id-ID'), admin: adminName, targetUser: user.name, action: 'Edit Poin', oldPoints: user.points, newPoints: parsed };
                 
                 const isToday = user.editedDate === new Date().toDateString();
                 const newEditCount = isToday ? (user.editCountToday || 0) + 1 : 1;
@@ -533,13 +616,13 @@
                 const updatedUser = { ...user, points: parsed, editedDate: new Date().toDateString(), editCountToday: newEditCount };
                 const otherUsers = users.filter(u => u.id !== id);
                 
-                updateData([...otherUsers, updatedUser], [newLog, ...logs]); // Render dipanggil di sini
+                updateData([...otherUsers, updatedUser], [newLog, ...logs]); 
             } else {
-                renderApp(); // Render jika batal/tidak berubah
+                renderApp(); 
             }
         };
         
-        // Listener Enter untuk Edit Poin & Bonus Cepat
+        // Listener Enter untuk Edit Poin & Bonus
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 if (inlinePointEditId && e.target.id === `inline-point-input-${inlinePointEditId}`) saveInlinePoints(inlinePointEditId);
@@ -564,11 +647,11 @@
             
             const user = users.find(u => u.id === id);
             const currentBonus = user.bonus || 0;
-            
-            inlineBonusEditId = null; // Tutup mode input
+            inlineBonusEditId = null; 
 
             if (parsed !== currentBonus) {
-                const newLog = { id: Date.now(), timestamp: new Date().toLocaleString('id-ID'), admin: currentAdmin, targetUser: user.name, action: 'Edit Bonus', oldPoints: currentBonus, newPoints: parsed };
+                const adminName = currentEmail.split('@')[0];
+                const newLog = { id: Date.now(), timestamp: new Date().toLocaleString('id-ID'), admin: adminName, targetUser: user.name, action: 'Edit Bonus', oldPoints: currentBonus, newPoints: parsed };
                 
                 const isToday = user.editedDate === new Date().toDateString();
                 const newEditCount = isToday ? (user.editCountToday || 0) + 1 : 1;
@@ -576,9 +659,9 @@
                 const updatedUser = { ...user, bonus: parsed, editedDate: new Date().toDateString(), editCountToday: newEditCount };
                 const otherUsers = users.filter(u => u.id !== id);
                 
-                updateData([...otherUsers, updatedUser], [newLog, ...logs]); // Render dipanggil di sini
+                updateData([...otherUsers, updatedUser], [newLog, ...logs]); 
             } else {
-                renderApp(); // Render jika batal/tidak berubah
+                renderApp();
             }
         };
 
@@ -589,7 +672,8 @@
                 const draggedItem = _users.splice(dragItemIndex, 1)[0];
                 _users.splice(dragOverItemIndex, 0, draggedItem);
                 
-                const newLog = { id: Date.now(), timestamp: new Date().toLocaleString('id-ID'), admin: currentAdmin, targetUser: draggedItem.name, action: 'Menggeser urutan akun', oldPoints: 0, newPoints: 0 };
+                const adminName = currentEmail.split('@')[0];
+                const newLog = { id: Date.now(), timestamp: new Date().toLocaleString('id-ID'), admin: adminName, targetUser: draggedItem.name, action: 'Menggeser urutan akun', oldPoints: 0, newPoints: 0 };
                 updateData(_users, [newLog, ...logs]);
             }
             dragItemIndex = null;
@@ -599,7 +683,6 @@
         // --- MODAL TAMBAH PENGGUNA ---
         const addModal = document.getElementById('add-modal');
         document.getElementById('add-user-btn').addEventListener('click', () => {
-            // Bersihkan form setiap kali dibuka
             document.getElementById('add-name').value = '';
             document.getElementById('add-email').value = '';
             document.getElementById('add-points').value = '0';
@@ -619,8 +702,9 @@
             if (!name || !email) return alert("Nama dan Email wajib diisi!");
             if (points < 0 || bonus < 0) return alert("Poin dan Bonus tidak boleh bernilai negatif!");
             
+            const adminName = currentEmail.split('@')[0];
             const newUser = { id: Date.now(), name, email, points, bonus, role };
-            const newLog = { id: Date.now()+1, timestamp: new Date().toLocaleString('id-ID'), admin: currentAdmin, targetUser: name, action: 'Tambah Akun Baru', oldPoints: 0, newPoints: points };
+            const newLog = { id: Date.now()+1, timestamp: new Date().toLocaleString('id-ID'), admin: adminName, targetUser: name, action: 'Tambah Akun Baru', oldPoints: 0, newPoints: points };
             
             updateData([...users, newUser], [newLog, ...logs]);
             addModal.classList.add('hidden');
@@ -655,9 +739,10 @@
             const user = users.find(u => u.id === id);
             let newLogs = logs;
             const currentBonus = user.bonus || 0;
+            const adminName = currentEmail.split('@')[0];
 
             if (points !== user.points || bonus !== currentBonus || name !== user.name || role !== user.role) {
-                const newLog = { id: Date.now(), timestamp: new Date().toLocaleString('id-ID'), admin: currentAdmin, targetUser: name, action: 'Ubah Pengaturan Akun', oldPoints: user.points, newPoints: points };
+                const newLog = { id: Date.now(), timestamp: new Date().toLocaleString('id-ID'), admin: adminName, targetUser: name, action: 'Ubah Pengaturan Akun', oldPoints: user.points, newPoints: points };
                 newLogs = [newLog, ...logs];
             }
 
@@ -682,7 +767,8 @@
         document.getElementById('cancel-delete-modal').addEventListener('click', () => deleteModal.classList.add('hidden'));
         document.getElementById('confirm-delete-btn').addEventListener('click', () => {
             const user = users.find(u => u.id === userToDeleteId);
-            const newLog = { id: Date.now(), timestamp: new Date().toLocaleString('id-ID'), admin: currentAdmin, targetUser: user.name, action: 'Hapus Akun', oldPoints: user.points, newPoints: 0 };
+            const adminName = currentEmail.split('@')[0];
+            const newLog = { id: Date.now(), timestamp: new Date().toLocaleString('id-ID'), admin: adminName, targetUser: user.name, action: 'Hapus Akun', oldPoints: user.points, newPoints: 0 };
             
             const newUsers = users.filter(u => u.id !== userToDeleteId);
             updateData(newUsers, [newLog, ...logs]);
@@ -691,7 +777,7 @@
 
         // --- BACKUP & RESTORE DATA KE/DARI KOMPUTER ---
         document.getElementById('backup-btn').addEventListener('click', () => {
-            const dataToSave = { users, logs, currentAdmin };
+            const dataToSave = { users, logs };
             const blob = new Blob([JSON.stringify(dataToSave, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -711,7 +797,7 @@
                 try {
                     const parsedData = JSON.parse(event.target.result);
                     if (parsedData.users && parsedData.logs) {
-                        updateData(parsedData.users, parsedData.logs, parsedData.currentAdmin || currentAdmin);
+                        updateData(parsedData.users, parsedData.logs);
                         alert("Data berhasil dipulihkan!");
                     } else {
                         alert("Format file backup tidak valid!");
@@ -724,8 +810,6 @@
             e.target.value = ''; // Reset input
         });
 
-        // Tampilkan awal! Bahkan jika Firebase belum selesai di-load.
-        renderApp();
     </script>
 </body>
 </html>
