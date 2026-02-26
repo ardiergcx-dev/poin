@@ -40,6 +40,7 @@
                     <span>Admin Email:</span>
                     <div id="email-display-container" class="flex items-center gap-2">
                         <span id="current-email-text" class="font-medium text-slate-700 cursor-pointer border-b border-dashed border-slate-400 hover:text-blue-600 hover:border-blue-600 transition-colors" title="Klik untuk memasukkan email">Belum disetel</span>
+                        <span id="sync-status" class="hidden text-[10px] md:text-xs px-2 py-0.5 rounded-md items-center gap-1 font-medium bg-emerald-100 text-emerald-700 ml-1" title="Sinkronisasi Cloud Aktif"></span>
                         <button id="logout-btn" class="hidden items-center justify-center p-1 text-red-500 hover:bg-red-100 rounded-md transition-colors" title="Keluar Akun">
                             <i data-lucide="log-out" class="w-4 h-4 md:w-5 md:h-5"></i>
                         </button>
@@ -349,6 +350,17 @@
             editEmailContainer.classList.remove('flex');
             textEmailContainer.classList.remove('hidden');
 
+            // Setel Indikator Cloud / Lokal
+            const syncStatus = document.getElementById('sync-status');
+            syncStatus.classList.remove('hidden');
+            if (isFirebaseConfigProvided) {
+                syncStatus.className = 'flex text-[10px] md:text-xs px-2 py-0.5 rounded-md items-center gap-1 font-medium bg-emerald-100 text-emerald-700 ml-1';
+                syncStatus.innerHTML = '<i data-lucide="cloud" class="w-3 h-3"></i> Cloud';
+            } else {
+                syncStatus.className = 'flex text-[10px] md:text-xs px-2 py-0.5 rounded-md items-center gap-1 font-medium bg-slate-200 text-slate-600 ml-1';
+                syncStatus.innerHTML = '<i data-lucide="hard-drive" class="w-3 h-3"></i> Lokal';
+            }
+
             // Tampilkan UI Dasbor
             document.getElementById('welcome-message').classList.add('hidden');
             document.getElementById('dashboard-content').classList.remove('hidden');
@@ -384,9 +396,21 @@
                     console.error("Gagal sinkronisasi data:", error);
                 });
             } else {
-                // Mode Lokal
-                users = [...initialUsers];
-                logs = [...initialLogs];
+                // Mode Lokal: Muat dari localStorage jika ada, jika tidak pakai data awal
+                const savedData = localStorage.getItem(`rewardsData_${dashId}`);
+                if (savedData) {
+                    try {
+                        const parsed = JSON.parse(savedData);
+                        users = parsed.users || [...initialUsers];
+                        logs = parsed.logs || [...initialLogs];
+                    } catch(e) {
+                        users = [...initialUsers];
+                        logs = [...initialLogs];
+                    }
+                } else {
+                    users = [...initialUsers];
+                    logs = [...initialLogs];
+                }
                 renderApp();
             }
         };
@@ -411,7 +435,10 @@
             textEmail.classList.add('text-slate-700');
             textEmail.classList.remove('text-blue-600', 'font-bold');
             
-            // Sembunyikan tombol logout
+            // Sembunyikan indikator & tombol logout
+            document.getElementById('sync-status').classList.add('hidden');
+            document.getElementById('sync-status').classList.remove('flex');
+            
             document.getElementById('logout-btn').classList.add('hidden');
             document.getElementById('logout-btn').classList.remove('flex');
             
@@ -429,10 +456,13 @@
             
             renderApp(); // Render UI Instan
             
-            // Simpan ke Cloud
+            // Simpan ke Cloud jika terhubung
             if (isFirebaseConfigProvided && firebaseUser && db && currentDashboardId) {
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'dashboards', currentDashboardId);
                 setDoc(docRef, { users, logs }).catch(console.error);
+            } else if (currentDashboardId) {
+                // Mode Lokal: Simpan permanen ke memori browser (localStorage)
+                localStorage.setItem(`rewardsData_${currentDashboardId}`, JSON.stringify({ users, logs }));
             }
         };
 
