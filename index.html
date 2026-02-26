@@ -217,13 +217,9 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Konfigurasi
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
+        // Cek Keberadaan Konfigurasi Cloud Bawaan
+        const isFirebaseConfigProvided = typeof __firebase_config !== 'undefined' && __firebase_config.trim() !== '';
+        
         // State Aplikasi
         let users = [
             { id: 1, name: 'Budi Santoso', email: 'budi@example.com', points: 1500, bonus: 500, role: 'Pengguna' },
@@ -234,7 +230,10 @@
         ];
         let currentAdmin = "Admin Utama";
         let isManageMode = false;
+        
+        let db = null;
         let firebaseUser = null;
+        let appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         let userToDeleteId = null;
 
         // State Inline Edit
@@ -247,37 +246,48 @@
         let dragItemIndex = null;
         let dragOverItemIndex = null;
 
-        // Inisialisasi Firebase Auth
-        const initAuth = async () => {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
-        };
-        initAuth();
+        // Inisialisasi Firebase HANYA JIKA konfigurasi ada
+        if (isFirebaseConfigProvided) {
+            try {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                db = getFirestore(app);
 
-        onAuthStateChanged(auth, (user) => {
-            firebaseUser = user;
-            if (user) {
-                const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'dashboard', 'data');
-                onSnapshot(docRef, (docSnap) => {
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        users = data.users || [];
-                        logs = data.logs || [];
-                        currentAdmin = data.currentAdmin || "Admin Utama";
+                const initAuth = async () => {
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
                     } else {
-                        setDoc(docRef, { users, logs, currentAdmin }).catch(console.error);
+                        await signInAnonymously(auth);
                     }
-                    renderApp();
-                }, (error) => {
-                    console.error("Gagal terhubung ke penyimpanan:", error);
-                });
-            }
-        });
+                };
+                initAuth();
 
-        // Optimasi: Fungsi update data dan render secara berurutan
+                onAuthStateChanged(auth, (user) => {
+                    firebaseUser = user;
+                    if (user) {
+                        const docRef = doc(db, 'artifacts', appId, 'users', user.uid, 'dashboard', 'data');
+                        onSnapshot(docRef, (docSnap) => {
+                            if (docSnap.exists()) {
+                                const data = docSnap.data();
+                                users = data.users || [];
+                                logs = data.logs || [];
+                                currentAdmin = data.currentAdmin || "Admin Utama";
+                            } else {
+                                setDoc(docRef, { users, logs, currentAdmin }).catch(console.error);
+                            }
+                            renderApp();
+                        }, (error) => {
+                            console.error("Gagal terhubung ke penyimpanan:", error);
+                        });
+                    }
+                });
+            } catch (error) {
+                console.error("Konfigurasi Firebase tidak valid. Berjalan di Mode Lokal.");
+            }
+        }
+
+        // Fungsi update data
         const updateData = (newUsers, newLogs, newAdmin) => {
             users = newUsers;
             logs = newLogs;
@@ -286,8 +296,8 @@
             // Langsung Render layarnya agar responsif (instan)
             renderApp();
             
-            // Lakukan sinkronisasi data ke Cloud secara asinkron di latar belakang
-            if (firebaseUser) {
+            // Lakukan sinkronisasi data ke Cloud jika terhubung
+            if (isFirebaseConfigProvided && firebaseUser && db) {
                 const docRef = doc(db, 'artifacts', appId, 'users', firebaseUser.uid, 'dashboard', 'data');
                 setDoc(docRef, { users, logs, currentAdmin }).catch(console.error);
             }
@@ -714,7 +724,7 @@
             e.target.value = ''; // Reset input
         });
 
-        // Tampilkan awal sebelum Firebase selesai loading
+        // Tampilkan awal! Bahkan jika Firebase belum selesai di-load.
         renderApp();
     </script>
 </body>
