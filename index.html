@@ -250,6 +250,7 @@
         let users = [];
         let logs = [];
         let isManageMode = false;
+        let currentAdmin = "Admin Utama";
         
         let db = null;
         let firebaseUser = null;
@@ -273,13 +274,32 @@
 
         lucide.createIcons();
 
-        // --- INISIALISASI FIREBASE ---
+        // --- INISIALISASI FIREBASE & AUTO LOGIN ---
+        function checkAutoLogin() {
+            const savedEmail = localStorage.getItem('rewardsAdminEmail');
+            if (savedEmail) {
+                document.getElementById('email-input').value = savedEmail;
+                loadDashboard();
+            }
+        }
+
         if (isFirebaseConfigProvided) {
             try {
                 const firebaseConfig = JSON.parse(__firebase_config);
                 const app = initializeApp(firebaseConfig);
                 const auth = getAuth(app);
                 db = getFirestore(app);
+
+                let authResolved = false;
+
+                onAuthStateChanged(auth, (user) => {
+                    firebaseUser = user;
+                    // Hanya jalankan auto-login setelah koneksi verifikasi selesai
+                    if (!authResolved) {
+                        authResolved = true;
+                        checkAutoLogin();
+                    }
+                });
 
                 const initAuth = async () => {
                     if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -290,12 +310,13 @@
                 };
                 initAuth();
 
-                onAuthStateChanged(auth, (user) => {
-                    firebaseUser = user;
-                });
             } catch (error) {
                 console.error("Konfigurasi Firebase tidak valid. Berjalan di Mode Lokal.");
+                checkAutoLogin();
             }
+        } else {
+            // Mode Lokal langsung cek login
+            checkAutoLogin();
         }
 
         // Fungsi Membersihkan Email menjadi ID Dokumen unik
@@ -387,10 +408,11 @@
                         const data = docSnap.data();
                         users = data.users || [];
                         logs = data.logs || [];
+                        currentAdmin = data.currentAdmin || "Admin Utama";
                         renderApp();
                     } else {
                         // Jika email belum ada datanya, buat baru
-                        setDoc(docRef, { users: initialUsers, logs: initialLogs }).catch(console.error);
+                        setDoc(docRef, { users: initialUsers, logs: initialLogs, currentAdmin: "Admin Utama" }).catch(console.error);
                     }
                 }, (error) => {
                     console.error("Gagal sinkronisasi data:", error);
@@ -403,13 +425,16 @@
                         const parsed = JSON.parse(savedData);
                         users = parsed.users || [...initialUsers];
                         logs = parsed.logs || [...initialLogs];
+                        currentAdmin = parsed.currentAdmin || "Admin Utama";
                     } catch(e) {
                         users = [...initialUsers];
                         logs = [...initialLogs];
+                        currentAdmin = "Admin Utama";
                     }
                 } else {
                     users = [...initialUsers];
                     logs = [...initialLogs];
+                    currentAdmin = "Admin Utama";
                 }
                 renderApp();
             }
@@ -450,19 +475,20 @@
         });
 
         // Fungsi update data
-        const updateData = (newUsers, newLogs) => {
+        const updateData = (newUsers, newLogs, newAdmin) => {
             users = newUsers;
             logs = newLogs;
+            if (newAdmin) currentAdmin = newAdmin;
             
             renderApp(); // Render UI Instan
             
             // Simpan ke Cloud jika terhubung
             if (isFirebaseConfigProvided && firebaseUser && db && currentDashboardId) {
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'dashboards', currentDashboardId);
-                setDoc(docRef, { users, logs }).catch(console.error);
+                setDoc(docRef, { users, logs, currentAdmin }).catch(console.error);
             } else if (currentDashboardId) {
                 // Mode Lokal: Simpan permanen ke memori browser (localStorage)
-                localStorage.setItem(`rewardsData_${currentDashboardId}`, JSON.stringify({ users, logs }));
+                localStorage.setItem(`rewardsData_${currentDashboardId}`, JSON.stringify({ users, logs, currentAdmin }));
             }
         };
 
@@ -846,14 +872,6 @@
             reader.readAsText(file);
             e.target.value = ''; // Reset input
         });
-
-        // --- CEK SESI SAAT HALAMAN DIMUAT ---
-        // Jika sebelumnya sudah login, muat ulang dasbor secara otomatis
-        const savedEmail = localStorage.getItem('rewardsAdminEmail');
-        if (savedEmail) {
-            emailInput.value = savedEmail;
-            loadDashboard();
-        }
 
     </script>
 </body>
