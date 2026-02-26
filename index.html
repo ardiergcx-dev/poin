@@ -338,6 +338,9 @@
             currentEmail = email;
             currentDashboardId = dashId;
 
+            // Simpan email ke memori browser agar tidak hilang saat di-refresh
+            localStorage.setItem('rewardsAdminEmail', email);
+
             // Reset UI Header
             textEmail.textContent = email;
             textEmail.classList.remove('text-slate-700');
@@ -399,6 +402,10 @@
             }
             currentEmail = null;
             currentDashboardId = null;
+            
+            // Hapus ingatan email dari browser saat logout
+            localStorage.removeItem('rewardsAdminEmail');
+            emailInput.value = '';
             
             textEmail.textContent = "Belum disetel";
             textEmail.classList.add('text-slate-700');
@@ -809,6 +816,14 @@
             reader.readAsText(file);
             e.target.value = ''; // Reset input
         });
+
+        // --- CEK SESI SAAT HALAMAN DIMUAT ---
+        // Jika sebelumnya sudah login, muat ulang dasbor secara otomatis
+        const savedEmail = localStorage.getItem('rewardsAdminEmail');
+        if (savedEmail) {
+            emailInput.value = savedEmail;
+            loadDashboard();
+        }
 
     </script>
 </body>
